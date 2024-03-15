@@ -2,4 +2,4 @@ BTC
 ETH
 BNB
 XRP
-BAND
+SOL
