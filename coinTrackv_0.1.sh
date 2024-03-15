@@ -35,7 +35,7 @@ z=0;
 while read zeile; do
 coinsToTrack="${coinsToTrack}$zeile,"
 done < collection.txt
-curl -g -s -X GET "https://min-api.cryptocompare.com/data/pricemultifull?fsyms="$coinsToTrack"&tsyms=$currency&api_key={5d9a85bfd7abf848065c6e1d47f9a1a0df5c7713d2c4e53d170c733a80222044}" | jq > newCoinValues.json
+curl -g -s -X GET "https://min-api.cryptocompare.com/data/pricemultifull?fsyms="$coinsToTrack"&tsyms=$currency&api_key={ }" | jq > newCoinValues.json
 
 echo;
 echo -e "*******  Coin  ******  Price ********* 1h% ** 24h% ** 3D% **  7D% **  1M%  **  3M%  **  6M%    .......  Holdings & Value in $currency";
@@ -50,7 +50,7 @@ changeHour=$(jq .DISPLAY.$coin.$currency.CHANGEHOUR $j | sed s/\"//g;) # 1h pric
 changePctHour=$(jq .DISPLAY.$coin.$currency.CHANGEPCTHOUR $j | sed s/\"//g;) # 1h pricechange in $currency
 
 
-history=$(curl -g -s -X GET "https://min-api.cryptocompare.com/data/v2/histoday?fsym="$coin"&tsym=$currency&limit=182&api_key={5d9a85bfd7abf848065c6e1d47f9a1a0df5c7713d2c4e53d170c733a80222044");
+history=$(curl -g -s -X GET "https://min-api.cryptocompare.com/data/v2/histoday?fsym="$coin"&tsym=$currency&limit=182&api_key={ ");
 # History Price-Changes. To round numbers after . use "LC_ALL=C /usr/bin/printf" because of german locale Numberformat using , instad of . ( 6,666).
 SIXm=$(printf $history | jq '.Data.Data.[0].close');
 SIXm=$(awk "BEGIN {a=$SIXm; e=$rawPrice; ep=(e-a)/a*100; printf ep}");
@@ -189,7 +189,7 @@ while read zeile; do
 coinsToTrack="${coinsToTrack}$zeile,"
 done < collection.txt
 
-curl -g -s -X GET "https://min-api.cryptocompare.com/data/pricemultifull?fsyms="$coinsToTrack"&tsyms=USD&api_key={5d9a85bfd7abf848065c6e1d47f9a1a0df5c7713d2c4e53d170c733a80222044}" | jq > newCoinValues.json
+curl -g -s -X GET "https://min-api.cryptocompare.com/data/pricemultifull?fsyms="$coinsToTrack"&tsyms=USD&api_key={ }" | jq > newCoinValues.json
 
 TABLE
 }
