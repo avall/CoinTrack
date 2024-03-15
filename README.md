@@ -13,7 +13,7 @@ Make sure to install `jq` Version 1.7.1 and above, and `gawk` in order for coinT
 You also might need a free API Key form Cryptocompare (https://min-api.cryptocompare.com/), but it seems to work without it at the moment.
 
 #### How to Install:
-  - Download: coinTrack_v0.4.sh (latest Version)
+  - You only need one File: coinTrack_v0.4.sh (latest Version)
   - Best to copy file into a own Folder
   - give the file necessary permissions `sudo chmod +x coinTrack_v0.4.sh`
   - Start with `./coinTrack_v0.4.sh`
