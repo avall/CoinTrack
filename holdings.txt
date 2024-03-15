@@ -1,0 +1,5 @@
+BTC_Holding=0
+ETH_Holding=0
+BNB_Holding=0
+XRP_Holding=0
+BAND_Holding=0

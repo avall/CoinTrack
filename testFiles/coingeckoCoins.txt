@@ -1,0 +1,7 @@
+bitcoin
+komodo
+benqi
+kusama
+near
+avalanche-2
+alchemy-pay
