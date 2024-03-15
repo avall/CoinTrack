@@ -14,7 +14,7 @@ You also might need a free API Key form Cryptocompare (https://min-api.cryptocom
 
 #### How to Install:
   - You only need one File: coinTrack.sh
-  - Best to copy file into a own Folder
+  - Best to copy file to its own Folder
   - give the file necessary permissions `sudo chmod +x coinTrack.sh`
   - Start with `./coinTrack.sh`
 
