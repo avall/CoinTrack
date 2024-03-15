@@ -1,5 +1,5 @@
 # coinTrack
-### Just a very simple tool to track your cryptocurrency Portfolio in the Linux Terminal.
+### Just a very simple Bash script to track your cryptocurrency Portfolio in the Linux Terminal.
 
 
 ![coinTrack Screenshot]( https://raw.githubusercontent.com/1tituz/CoinTrack/main/screenshot_coinTrack.png "Screenshot")
