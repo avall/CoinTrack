@@ -9,12 +9,12 @@ Standart View
 History View
 
 #### Dependencies:
-Make sure to install `jq` Version 1.6.1 and above tested, and `gawk` in order for coinTrak to work.  
+You need `jq` Version 1.6 or above, and `gawk` installed in order for coinTrack to work.  
 You also might need a free API Key form Cryptocompare (https://min-api.cryptocompare.com/), but it seems to work without it at the moment.
 
 #### How to Install:
   - You only need one File: coinTrack.sh
-  - Best to copy file into a own Folder
+  - Best to copy file to its own Folder
   - give the file necessary permissions `sudo chmod +x coinTrack.sh`
   - Start with `./coinTrack.sh`
 
