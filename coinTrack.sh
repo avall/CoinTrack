@@ -255,7 +255,8 @@ case $next in
     "p") portF=0; TABLE ;;
     "P") portF=1; TABLE ;;
     "h") HISTORY ;;
-    "c") HOLDINGS ;;
+    "H") HOLDINGS ;;
+    "c") CURRENCY ;;
     *) TABLE ;;
 esac
 
@@ -269,13 +270,24 @@ INFO () {
     echo;
     echo -e "   ${bold}a${reset} - Add Coin"
     echo -e "   ${bold}d${reset} - Delete Coin"
-    echo -e "   ${bold}c${reset} - Change Holdings"
+    echo -e "   ${bold}H${reset} - Change Holdings"
     echo
     echo -e "   ${bold}P${reset} - Portfolio Visible"
     echo -e "   ${bold}p${reset} - Portfolio Hidden"
+    echo -e "   ${bold}c${reset} - Change Currency"
+    echo
     echo -e "   ${bold}q${reset} - Quit"
     echo;echo;echo;
     MENU
+}
+
+CURRENCY () {
+    if [[ $currency == "USD" ]]; then
+        currency="EUR"
+        else
+        currency="USD"
+    fi
+    TABLE
 }
 
 DELETECOIN () {
