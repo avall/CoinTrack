@@ -66,7 +66,8 @@ echo -e "        | (_| (_) | | | | | | | | (_| | (__|   < "
 echo -e "         \___\___/|_|_| |_|_|_|  \____|\___|_|\_\."
 
 echo;echo;
-
+# Generate coinsToTrack
+coinsToTrack=$(echo "$jsonFile" | jq '.DATA.Coins | keys.[]' | sed 's/\"//g;s/$/,/' | tr -d '\n')
 
 }
 
@@ -83,14 +84,11 @@ currency=$(echo "$jsonFile" | jq .DATA.Currency | sed s/\"//g;);
 #Count amount of CoinstoTrack
 n=$(echo "$jsonFile" | jq '.DATA.Coins | length')
 
-
-z=0;
-totalValue=0;
-
-
 # Generate coinsToTrack
 coinsToTrack=$(echo "$jsonFile" | jq '.DATA.Coins | keys.[]' | sed 's/\"//g;s/$/,/' | tr -d '\n')
 
+z=0;
+totalValue=0;
 
 newValues=$(curl -g -s -X GET "https://min-api.cryptocompare.com/data/pricemultifull?fsyms="$coinsToTrack"&tsyms=$currency&api_key={$APIkey}" | jq)
 
@@ -170,9 +168,6 @@ MENU
 #### HISTORY TABLE
 HISTORY () {
 LOGO
-while read zeile; do
-coinsToTrack="${coinsToTrack}$zeile,"
-done < collection.txt
 
 curl -g -s -X GET "https://min-api.cryptocompare.com/data/pricemultifull?fsyms="$coinsToTrack"&tsyms=$currency&api_key={$APIkey}" | jq > newCoinValues.json
 
@@ -269,7 +264,7 @@ esac
 }
 
 INFO () {
-    echo -e "${grey}______________________________________________________________________________________________${reset}";
+    echo -e "${white}______________________________________________________________________________________________${reset}";
     echo;echo;
     echo -e "   ${white}Key configuration INFO:${reset}"
     echo -e "   ----------------------"
