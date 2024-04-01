@@ -297,25 +297,37 @@ CURRENCY () {
 }
 
 DELETECOIN () {
-    echo -e "${grey}______________________________________________________________________________________________${reset}";
+    echo -e "${red}______________________________________________________________________________________________${reset}";
     echo;echo;
-    echo -e "   ${white}DELETE COIN${reset}"
-    echo -e "   ------------"
+    echo -e "   ${red}DELETE COIN"
+    echo -e "   ------------${reset}"
     echo;
-    nl collection.txt
-    echo;echo
-    echo -n "   Nr.: "
+    coinList=$(echo "$jsonFile" | jq '.DATA.Coins | keys.[]' | sed 's/\"//g')
+    count=1;
+    while IFS= read -r line; do
+    echo "$count. $line"
+    coinContainer[$count]="$line"
+    count=$((count+1))
+    done <<< "$coinList"
+    echo
+    echo -e "   Select Coin Nr."
+    echo -n "   : "
     read dcoin
     if [[ -z $dcoin ]]; then
         TABLE
     fi
-    echo -n "   Are you sure? [y/n]: "
+    dcoin="${coinContainer[$dcoin]}"
+    echo
+    echo -e "   Are you sure to delete ${red}${bold}"$dcoin"${reset}? [y/n]"
+    echo -n "   : "
     read sure
     if [[ $sure == y || -z $sure ]]; then
-        sed -i "$dcoin"d collection.txt
-        sed -i "$dcoin"d holdings.txt
+        jsonFile=$(echo "$jsonFile" | jq --arg delCoin "$dcoin" 'del(.DATA.Coins.[$delCoin])')
+        echo "$jsonFile" | jq > db.json
+
         TABLE
     else
+        echo
         echo "  abort.";
         sleep 1s;
         TABLE
@@ -325,30 +337,26 @@ DELETECOIN () {
     # echo "$jsonFile" | jq --arg delCoin "$dCoin" 'del(.DATA.Coins.[$delCoin])'
 }
 ADDCOIN () {
-    echo -e "${grey}______________________________________________________________________________________________${reset}";
+    echo -e "${white}______________________________________________________________________________________________${reset}";
     echo;echo;
     echo -e "   ${white}ADD COIN${reset}"
     echo -e "   --------"
     echo;
-    echo -n "   Coinsymbol: "
+    echo -e "   Coinsymbol to add:"
+    echo -n "   : "
     read cadd
     if [[ -z $cadd ]]; then
         TABLE
+        else
+        jsonFile=$(echo "$jsonFile" | jq --arg Coin "$cadd" '.DATA.Coins += {$Coin: {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null}}')
+        echo "$jsonFile" | jq > db.json
     fi
-    cadd=${cadd^^}
-    echo "$cadd" >> collection.txt
-    echo -n "   Holdings: "
-    read cholding
-    if [[ -z $cholding ]]; then
-    echo ""$cadd"_Holding=0" >> holdings.txt
-    else
-    echo ""$cadd"_Holding=$cholding" >> holdings.txt
-    fi
+    
     TABLE
 }
 
 HOLDINGS () {
-    echo -e "${grey}______________________________________________________________________________________________${reset}";
+    echo -e "${white}______________________________________________________________________________________________${reset}";
     echo;echo;
     echo -e "   ${white}ADD/REMOVE Holdings${reset}"
     echo -e "   -------------------"
@@ -362,6 +370,7 @@ HOLDINGS () {
     count=$((count+1))
     done <<< "$coinList"
     echo
+    echo -e "   Select Coin Nr."
     echo -n "   : "
     read selectedCoin
     if [[ -z $selectedCoin ]]; then
@@ -369,7 +378,7 @@ HOLDINGS () {
     fi
     echo;echo;
     selectedCoin="${coinContainer[$selectedCoin]}"
-    currentAmount=$(echo "$jsonFile" | jq --arg c "$selectedCoin" '.DATA.Coins.[$c].Holding')
+    currentAmount=$(echo "$jsonFile" | jq --arg c "$selectedCoin" '.DATA.Coins.[$c].Holding' | sed 's/\"//g')
 
     echo -e "   You are currently holding: ${blue}${bold}"$selectedCoin" "$currentAmount" ${reset}"
     echo -e "   ${grey}To add or subtract, simply use a plus or minus sign in front of the value (e.g.+100).${reset}"
