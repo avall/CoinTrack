@@ -71,7 +71,7 @@ echo;echo;
 }
 
 
-# NORMAL PRICE TABLE
+############################# PRICE TABLE
 TABLE () {
 LOGO
 
@@ -120,7 +120,7 @@ if [[ $change == -* ]]; then change=${red}$change${reset}; else change=${green}$
 #if [[ $change == -* ]]; then price=${red}$price${reset}; else price=${green}$price${reset}; fi
 
 
-holding=$(grep $coin holdings.txt| grep -o '[0-9.]*')
+holding=$(echo "$jsonFile" | jq ".DATA.Coins.$coin.Holding" | sed s/\"//g;) # get Holdings
 value=$(awk "BEGIN {h=$holding; p=$rawPrice; vl=h*p; print vl}")
 
 
@@ -353,27 +353,41 @@ HOLDINGS () {
     echo -e "   ${white}ADD/REMOVE Holdings${reset}"
     echo -e "   -------------------"
     echo;
-    nl holdings.txt | cut -d _ -f1
+
+    coinList=$(echo "$jsonFile" | jq '.DATA.Coins | keys.[]' | sed 's/\"//g')
+    count=1;
+    while IFS= read -r line; do
+    echo "$count. $line"
+    coinContainer[$count]="$line"
+    count=$((count+1))
+    done <<< "$coinList"
     echo
     echo -n "   : "
-    read selectedCoinRow
-    if [[ -z $selectedCoinRow ]]; then
+    read selectedCoin
+    if [[ -z $selectedCoin ]]; then
         TABLE
     fi
     echo;echo;
-    selectedCoin[0]=$(sed -n "$selectedCoinRow"p holdings.txt | cut -d _ -f1);
-    selectedCoin[1]=$(sed -n "$selectedCoinRow"p holdings.txt | cut -d = -f2);
-    echo -e "   You are currently holding: ${blue}${bold}${selectedCoin[1]} ${selectedCoin[0]}${reset}"
+    selectedCoin="${coinContainer[$selectedCoin]}"
+    currentAmount=$(echo "$jsonFile" | jq --arg c "$selectedCoin" '.DATA.Coins.[$c].Holding')
+
+    echo -e "   You are currently holding: ${blue}${bold}"$selectedCoin" "$currentAmount" ${reset}"
     echo -e "   ${grey}To add or subtract, simply use a plus or minus sign in front of the value (e.g.+100).${reset}"
     echo;
     echo -n "   Amount: "   
     read amount
     if [[ $amount == *"+"* ]] || [[ $amount == *"-"* ]]; then
-        newAmount=$(awk "BEGIN {a=${selectedCoin[1]}; n=$amount; an=a+n; printf an}");
+        newAmount=$(awk "BEGIN {a="$currentAmount"; n="$amount"; an=a+n; printf an}");
     else
         newAmount="$amount"
     fi
-    sed -i "${selectedCoinRow}s/=.*/=$newAmount/" holdings.txt
+
+    jsonFile=$(echo "$jsonFile" | jq --arg newHolding $newAmount --arg c "$selectedCoin" '.DATA.Coins.[$c] += {"Holding": $newHolding}')
+    echo "$jsonFile" | jq > db.json
+   
+
+
+
     TABLE
 }
 APITEST () {
