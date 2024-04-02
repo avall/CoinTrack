@@ -43,8 +43,6 @@ read APIkey
 jsonFile=$(cat db.json | jq)
 jsonFile=$(echo "$jsonFile" | jq --arg apiKey "$APIkey" '.DATA += {"apiKey": $apiKey}')
 echo "$jsonFile" | jq > db.json
-
-echo "APIkey=$APIkey" > .apiKey.txt
 echo;
 APITEST
 echo;echo;
@@ -83,10 +81,10 @@ currency=$(echo "$jsonFile" | jq .DATA.Currency | sed s/\"//g;);
 n=$(echo "$jsonFile" | jq '.DATA.Coins | length')
 # Generate coinsToTrack
 coinsToTrack=$(echo "$jsonFile" | jq '.DATA.Coins | keys.[]' | sed 's/\"//g;s/$/,/' | tr -d '\n')
-
-z=0;
+# Set totalValue to 0
 totalValue=0;
 
+# get current Values
 newValues=$(curl -g -s -X GET "https://min-api.cryptocompare.com/data/pricemultifull?fsyms="$coinsToTrack"&tsyms=$currency&api_key={$APIkey}" | jq)
 
 
@@ -329,6 +327,7 @@ ADDCOIN () {
     echo -e "   Coinsymbol to add:"
     echo -n "   : "
     read cadd
+    cadd=${cadd^^}
     if [[ -z $cadd ]]; then
         TABLE
         else
@@ -368,6 +367,7 @@ HOLDINGS () {
     echo;
     echo -n "   Amount: "   
     read amount
+    amount=$(echo $amount | sed 's/\,/\./g');
     if [[ $amount == *"+"* ]] || [[ $amount == *"-"* ]]; then
         newAmount=$(awk "BEGIN {a="$currentAmount"; n="$amount"; an=a+n; printf an}");
     else
