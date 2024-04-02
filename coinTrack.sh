@@ -19,7 +19,6 @@ START () {
         echo "$jsonFile" > db.json
         INSTALL
     fi
-
 TABLE
 }
 
@@ -77,6 +76,8 @@ jsonFile=$(cat db.json | jq)
 portF=$(echo "$jsonFile" | jq .DATA.Portfolio | sed s/\"//g;);
 currency=$(echo "$jsonFile" | jq .DATA.Currency | sed s/\"//g;);
 
+
+
 #Count amount of CoinstoTrack
 n=$(echo "$jsonFile" | jq '.DATA.Coins | length')
 
@@ -124,7 +125,10 @@ if [[ $portF == 0 ]]; then
     holding="******";
     value="******";
 fi
-
+if [[ $value == 0 ]]; then
+    holding=" ";
+    value=" ";
+fi
 echo -e "....... ${bold}${white}$coin${reset} ... $price ... $changePctHour $changePct  ....... $holding     =     ${blue}$value${reset}"; 
 
 done | column -t;
@@ -243,8 +247,7 @@ case $next in
     "a") ADDCOIN ;;
     "d") DELETECOIN ;;
     "i") INFO ;;
-    "p") portF=0; TABLE ;;
-    "P") portF=1; TABLE ;;
+    "p") SHOWPORT ;;
     "h") HISTORY ;;
     "H") HOLDINGS ;;
     "c") CURRENCY ;;
@@ -263,20 +266,37 @@ INFO () {
     echo -e "   ${bold}d${reset} - Delete Coin"
     echo -e "   ${bold}H${reset} - Change Holdings"
     echo
-    echo -e "   ${bold}P${reset} - Portfolio Visible"
-    echo -e "   ${bold}p${reset} - Portfolio Hidden"
-    echo -e "   ${bold}c${reset} - Change Currency"
+    echo -e "   ${bold}p${reset} - Portfolio Visible/Hidden"
+    echo -e "   ${bold}c${reset} - Change Currency USD/EUR"
     echo
     echo -e "   ${bold}q${reset} - Quit"
     echo;echo;echo;
     MENU
 }
 
+
+SHOWPORT () {
+    if [[ $portF == "1" ]]; then
+        portF="0";
+        jsonFile=$(echo "$jsonFile" | jq --arg port "$portF" '.DATA += {"Portfolio": $port}')
+        echo $jsonFile | jq > db.json
+        else
+        portF="1";
+        jsonFile=$(echo "$jsonFile" | jq --arg port "$portF" '.DATA += {"Portfolio": $port}')
+        echo $jsonFile | jq > db.json
+    fi
+    TABLE
+}
+
 CURRENCY () {
     if [[ $currency == "USD" ]]; then
         currency="EUR"
+        jsonFile=$(echo "$jsonFile" | jq --arg Cur "$currency" '.DATA += {"Currency": $Cur}')
+        echo $jsonFile | jq > db.json
         else
         currency="USD"
+        jsonFile=$(echo "$jsonFile" | jq --arg Cur "$currency" '.DATA += {"Currency": $Cur}')
+        echo $jsonFile | jq > db.json
     fi
     TABLE
 }
