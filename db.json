@@ -1,0 +1,39 @@
+{
+  "DATA": {
+    "apiKey": "",
+    "Currency": "USD",
+    "Portfolio": "1",
+    "Coins": {
+      "BTC": {
+        "Holding": "0.1",
+        "FIATholding": "6657.7",
+        "currentPrice": null,
+        "rawCurrentPrice": null
+      },
+      "ETH": {
+        "Holding": "0.6",
+        "FIATholding": "2025.15",
+        "currentPrice": null,
+        "rawCurrentPrice": null
+      },
+      "BNB": {
+        "Holding": "0.9",
+        "FIATholding": "504.304",
+        "currentPrice": null,
+        "rawCurrentPrice": null
+      },
+      "SOL": {
+        "Holding": "2158.77",
+        "FIATholding": "396027",
+        "currentPrice": null,
+        "rawCurrentPrice": null
+      },
+      "DOGE": {
+        "Holding": "25547.55",
+        "FIATholding": "4785.57",
+        "currentPrice": null,
+        "rawCurrentPrice": null
+      }
+    }
+  }
+}

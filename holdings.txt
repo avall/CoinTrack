@@ -1,5 +1,0 @@
-BTC_Holding=0.01
-ETH_Holding=0.3
-BNB_Holding=0.2
-XRP_Holding=200
-SOL_Holding=12

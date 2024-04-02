@@ -1,5 +1,0 @@
-BTC
-ETH
-BNB
-XRP
-SOL
