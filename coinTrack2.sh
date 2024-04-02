@@ -66,8 +66,6 @@ echo -e "        | (_| (_) | | | | | | | | (_| | (__|   < "
 echo -e "         \___\___/|_|_| |_|_|_|  \____|\___|_|\_\."
 
 echo;echo;
-# Generate coinsToTrack
-coinsToTrack=$(echo "$jsonFile" | jq '.DATA.Coins | keys.[]' | sed 's/\"//g;s/$/,/' | tr -d '\n')
 
 }
 
@@ -83,7 +81,6 @@ currency=$(echo "$jsonFile" | jq .DATA.Currency | sed s/\"//g;);
 
 #Count amount of CoinstoTrack
 n=$(echo "$jsonFile" | jq '.DATA.Coins | length')
-
 # Generate coinsToTrack
 coinsToTrack=$(echo "$jsonFile" | jq '.DATA.Coins | keys.[]' | sed 's/\"//g;s/$/,/' | tr -d '\n')
 
@@ -114,30 +111,15 @@ if [[ $changePct == -* ]]; then changePct=${red}$changePct${reset}; else changeP
 if [[ $changePctHour == -* ]]; then changePctHour=${red}$changePctHour${reset}; else changePctHour=${green}+$changePctHour${reset}; fi
 if [[ $change == -* ]]; then change=${red}$change${reset}; else change=${green}$change${reset}; fi
 
-# Change current price color
-#if [[ $change == -* ]]; then price=${red}$price${reset}; else price=${green}$price${reset}; fi
 
-
+# Calculate FIAT value of Holdings
 holding=$(echo "$jsonFile" | jq ".DATA.Coins.$coin.Holding" | sed s/\"//g;) # get Holdings
 value=$(awk "BEGIN {h=$holding; p=$rawPrice; vl=h*p; print vl}")
+# Write FIAT value to db.json
+jsonFile=$(echo "$jsonFile" | jq --arg newHolding $value --arg c "$coin" '.DATA.Coins.[$c] += {"FIATholding": $newHolding}');
+echo "$jsonFile" | jq > db.json
 
 
-#jq --null-input --arg Coin "$symbol" --arg Preis "$price" --arg Wert "$value" --arg WertRaw "$rawPrice" --arg Holding "$holding" '{$Coin: {"Preis": $Preis, "Wert": $Wert, "WertRaw": $WertRaw, "Holding": $Holding}}' > ./data/$symbol.json
-
-if [[ ! -f ./data/coinValues.json ]]; then
-    jsonFile=$(jq --null-input '{coins: {}}')
-    echo "$jsonFile" > coinValues.json
-fi
-jsonFile=$(echo "$jsonFile" | jq --arg Coin "$symbol" --arg Preis "$price" --arg rawPreis "$rawPrice" --arg holding "$holding" --arg fiatHolding "$value" '.coins += {$Coin: {"Preis": $Preis, "rawPreis": $rawPreis, "holding": $holding, "fiatHolding": $fiatHolding }}')
-echo $jsonFile | jq > ./data/coinValues.json
-
-#jq --null-input --arg Coin "$symbol" --arg Preis "$price" --arg Wert "$value" '{$Coin: {"Preis": $Preis, "Wert": $Wert}}' >> ./data/coinWerte.json
-
-
-# This totalValue thing needs to be fixed
-# BETRÄGE SOLLEN IN ARRAYS GESCHRIEBEN WERDEN ... txt file loswerden.
-totalValue=$(awk "BEGIN {t=$totalValue; v=$value; tv=v+t; print tv}")
-echo "totalValue=$totalValue" > .totalValue.txt
 
 if [[ $portF == 0 ]]; then
     holding="******";
@@ -147,13 +129,20 @@ fi
 echo -e "....... ${bold}${white}$coin${reset} ... $price ... $changePctHour $changePct  ....... $holding     =     ${blue}$value${reset}"; 
 
 done | column -t;
+echo;echo;
 
-source .totalValue.txt
-rm .totalValue.txt
+# Calculate Total Value
+jsonFile=$(cat db.json | jq)
+valueList=$(echo "$jsonFile" | jq '.DATA.Coins.[] | .FIATholding' | sed 's/\"//g')
+    
+while IFS= read -r line; do
+totalValue=$(awk "BEGIN {t=$totalValue; l=$line; tl=t+l; print tl}");
+done <<< "$valueList"
+
 if [[ $portF == 0 ]]; then
     totalValue="****"
 fi
-echo;echo;
+
 echo -e "   Total Value: ${blue}${bold}$currency $totalValue ${reset}";
 
 
@@ -345,9 +334,8 @@ ADDCOIN () {
         else
         jsonFile=$(echo "$jsonFile" | jq --arg Coin "$cadd" '.DATA.Coins += {$Coin: {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null}}')
         echo "$jsonFile" | jq > db.json
-    fi
-    
-    TABLE
+    fi 
+TABLE
 }
 
 HOLDINGS () {
