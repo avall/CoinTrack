@@ -15,7 +15,7 @@ reset="\e[0m" # ${reset}
 jsonFile=db.json
 START () {
     if [[ ! -f $jsonFile ]]; then
-        jsonFile=$(jq --null-input '{"DATA": {"apiKey": null, "Currency": "USD", "Portfolio": "1", "Coins": {"BTC": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null}, "ETH": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null}, "BNB": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null}, "SOL": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null}, "DOGE": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null},}}}');
+        jsonFile=$(jq --null-input '{"DATA": {"apiKey": null, "Currency": "USD", "Portfolio": "1", "sortTable": "a", "Coins": {"BTC": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null, "Marketcap": null}, "ETH": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null, "Marketcap": null}, "BNB": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null, "Marketcap": null}, "SOL": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null}, "DOGE": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null, "Marketcap": null},}}}');
         echo "$jsonFile" > db.json
         INSTALL
     fi
@@ -71,21 +71,13 @@ echo;echo;
 TABLE () {
 LOGO
 
-
-
-# SORT SCRIPT
-# cat test.json | jq '.DATA.Coins | to_entries | sort_by( .value.FIATholding | tonumber) | reverse | from_entries'
-
-
-
-
 # Some Variables
 jsonFile=$(cat db.json | jq);
 
 
-portF=$(echo "$jsonFile" | jq .DATA.Portfolio | sed s/\"//g;);
-currency=$(echo "$jsonFile" | jq .DATA.Currency | sed s/\"//g;);
-
+portF=$(echo "$jsonFile" | jq -r '.DATA.Portfolio');
+currency=$(echo "$jsonFile" | jq -r '.DATA.Currency');
+sortTABLE=$(echo "$jsonFile" | jq -r '.DATA.sortTable');
 
 
 #Count amount of CoinstoTrack
@@ -106,9 +98,17 @@ echo -e "–––––––––––––––––––––––�
 for (( i=0; i<$n; i++ ));  do
 
 # Get the Coinsymbols from db.json
-#coin=$(echo "$jsonFile" | jq ".DATA.Coins | keys.[$i]" | sed 's/\"//g') # Symbol
-# Sort bei Portfolio Value
-coin=$(echo "$jsonFile" | jq '.DATA.Coins | to_entries | sort_by( .value.FIATholding | tonumber) | reverse | from_entries' | jq -r "keys_unsorted[$i]");
+if [[ $sortTABLE == "a" ]]; then
+    # Alphabetical Sort
+    coin=$(echo "$jsonFile" | jq ".DATA.Coins | keys.[$i]" | sed 's/\"//g') # Symbol
+    elif [[ $sortTABLE == "p" ]]; then
+    # Sort bei Portfolio Value
+    coin=$(echo "$jsonFile" | jq '.DATA.Coins | to_entries | sort_by( .value.FIATholding | tonumber) | reverse | from_entries' | jq -r "keys_unsorted[$i]");
+    elif [[ $sortTABLE == "m" ]]; then
+    # Sort bei Portfolio Value
+    coin=$(echo "$jsonFile" | jq '.DATA.Coins | to_entries | sort_by( .value.Marketcap | tonumber) | reverse | from_entries' | jq -r "keys_unsorted[$i]");
+fi
+
 
 rawPrice=$(echo "$newValues" | jq -r .RAW.$coin.$currency.PRICE) # Current RawPrice
 price=$(echo "$newValues" | jq -r .DISPLAY.$coin.$currency.PRICE) # Current Price
@@ -128,8 +128,10 @@ holding=$(echo "$jsonFile" | jq -r ".DATA.Coins.$coin.Holding") # get Holdings
 value=$(awk "BEGIN {h=$holding; p=$rawPrice; vl=h*p; print vl}")
 # Write FIAT value to db.json
 jsonFile=$(echo "$jsonFile" | jq --arg newHolding $value --arg c "$coin" '.DATA.Coins.[$c] += {"FIATholding": $newHolding}');
+# Also add current Marketcap
+marketCap=$(echo "$newValues" | jq -r .RAW.$coin.$currency.MKTCAP)
+jsonFile=$(echo "$jsonFile" | jq --arg Mcap $marketCap --arg c "$coin" '.DATA.Coins.[$c] += {"Marketcap": $Mcap}');
 echo "$jsonFile" | jq > db.json
-
 
 
 if [[ $portF == 0 ]]; then
@@ -159,13 +161,9 @@ fi
 
 echo -e "   Total Value: ${blue}${bold}$currency $totalValue ${reset}";
 
-
-
-
 echo;echo;echo;echo;
 MENU
 }
-
 
 
 #### HISTORY TABLE
@@ -178,8 +176,18 @@ echo;
 echo -e "*******  Coin  ******  Price ********* 1h% ** 24h% ** 3D% **  7D% **  1M%  ** 3M%  **  6M%";
 echo -e "–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––";
 for (( i=0; i<$n; i++ ));  do
+
 # Get the Coinsymbols from db.json
-coin=$(echo "$jsonFile" | jq ".DATA.Coins | keys.[$i]" | sed 's/\"//g') # Symbol
+if [[ $sortTABLE == "a" ]]; then
+    # Alphabetical Sort
+    coin=$(echo "$jsonFile" | jq ".DATA.Coins | keys.[$i]" | sed 's/\"//g') # Symbol
+    elif [[ $sortTABLE == "p" ]]; then
+    # Sort bei Portfolio Value
+    coin=$(echo "$jsonFile" | jq '.DATA.Coins | to_entries | sort_by( .value.FIATholding | tonumber) | reverse | from_entries' | jq -r "keys_unsorted[$i]");
+    elif [[ $sortTABLE == "m" ]]; then
+    # Sort bei Portfolio Value
+    coin=$(echo "$jsonFile" | jq '.DATA.Coins | to_entries | sort_by( .value.Marketcap | tonumber) | reverse | from_entries' | jq -r "keys_unsorted[$i]");
+fi
 
 rawPrice=$(echo "$newValues" | jq .RAW.$coin.$currency.PRICE | sed s/\"//g;) # Current RawPrice
 price=$(echo "$newValues" | jq .DISPLAY.$coin.$currency.PRICE | sed s/\"//g;) # Current Price
@@ -262,6 +270,7 @@ case $next in
     "h") HISTORY ;;
     "H") HOLDINGS ;;
     "c") CURRENCY ;;
+    "s") SORT ;;
     *) TABLE ;;
 esac
 
@@ -279,12 +288,39 @@ INFO () {
     echo
     echo -e "   ${bold}p${reset} - Portfolio Visible/Hidden"
     echo -e "   ${bold}c${reset} - Change Currency USD/EUR"
+    echo -e "   ${bold}s${reset} - Sort the listing"
     echo
     echo -e "   ${bold}q${reset} - Quit"
     echo;echo;echo;
     MENU
 }
 
+
+SORT () {
+    echo -e "${white}______________________________________________________________________________________________${reset}";
+    echo;echo;
+    echo -e "   ${white}PREFERRED SORTING ORDER OF COIN LIST"
+    echo -e "   ------------------------------------${reset}"
+    echo;
+    echo -e "   ${white}a${reset} = Alphabetical"
+    echo -e "   ${white}m${reset} = Marketcap"
+    echo -e "   ${white}p${reset} = Portfoliovalue"
+    echo;
+    echo -n "   : "
+    read sortOrder
+    if [[ -z $sortOrder ]]; then
+        TABLE
+        elif [[ $sortOrder == *"a"* || $sortOrder == *"m"* || $sortOrder == *"p"* ]]; then
+        jsonFile=$(echo "$jsonFile" | jq --arg sort "$sortOrder" '.DATA += {"sortTable": $sort}')
+        echo $jsonFile | jq > db.json
+        TABLE
+        else
+        echo
+        echo -e "   ${red}Incorrect Input - only a, m or p are valid."${reset};
+        sleep 2s;
+        TABLE
+    fi
+}
 
 SHOWPORT () {
     if [[ $portF == "1" ]]; then
@@ -348,9 +384,6 @@ DELETECOIN () {
         sleep 1s;
         TABLE
     fi
-    # LÖSCHEN mit jq
-    # 
-    # echo "$jsonFile" | jq --arg delCoin "$dCoin" 'del(.DATA.Coins.[$delCoin])'
 }
 ADDCOIN () {
     echo -e "${white}______________________________________________________________________________________________${reset}";
