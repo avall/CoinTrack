@@ -71,8 +71,18 @@ echo;echo;
 TABLE () {
 LOGO
 
+
+
+# SORT SCRIPT
+# cat test.json | jq '.DATA.Coins | to_entries | sort_by( .value.FIATholding | tonumber) | reverse | from_entries'
+
+
+
+
 # Some Variables
-jsonFile=$(cat db.json | jq)
+jsonFile=$(cat db.json | jq);
+
+
 portF=$(echo "$jsonFile" | jq .DATA.Portfolio | sed s/\"//g;);
 currency=$(echo "$jsonFile" | jq .DATA.Currency | sed s/\"//g;);
 
@@ -96,15 +106,16 @@ echo -e "–––––––––––––––––––––––�
 for (( i=0; i<$n; i++ ));  do
 
 # Get the Coinsymbols from db.json
-coin=$(echo "$jsonFile" | jq ".DATA.Coins | keys.[$i]" | sed 's/\"//g') # Symbol
+#coin=$(echo "$jsonFile" | jq ".DATA.Coins | keys.[$i]" | sed 's/\"//g') # Symbol
+# Sort bei Portfolio Value
+coin=$(echo "$jsonFile" | jq '.DATA.Coins | to_entries | sort_by( .value.FIATholding | tonumber) | reverse | from_entries' | jq -r "keys_unsorted[$i]");
 
-
-rawPrice=$(echo "$newValues" | jq .RAW.$coin.$currency.PRICE | sed s/\"//g;) # Current RawPrice
-price=$(echo "$newValues" | jq .DISPLAY.$coin.$currency.PRICE | sed s/\"//g;) # Current Price
-change=$(echo "$newValues" | jq .DISPLAY.$coin.$currency.CHANGE24HOUR | sed s/\"//g;) # 24h pricechange $currency
-changePct=$(echo "$newValues" | jq .DISPLAY.$coin.$currency.CHANGEPCT24HOUR | sed s/\"//g;) # 24h pricechange in %
-changeHour=$(echo "$newValues" | jq .DISPLAY.$coin.$currency.CHANGEHOUR | sed s/\"//g;) # 1h pricechange in USD
-changePctHour=$(echo "$newValues" | jq .DISPLAY.$coin.$currency.CHANGEPCTHOUR | sed s/\"//g;) # 1h pricechange in $currency
+rawPrice=$(echo "$newValues" | jq -r .RAW.$coin.$currency.PRICE) # Current RawPrice
+price=$(echo "$newValues" | jq -r .DISPLAY.$coin.$currency.PRICE) # Current Price
+change=$(echo "$newValues" | jq -r .DISPLAY.$coin.$currency.CHANGE24HOUR) # 24h pricechange $currency
+changePct=$(echo "$newValues" | jq -r .DISPLAY.$coin.$currency.CHANGEPCT24HOUR) # 24h pricechange in %
+changeHour=$(echo "$newValues" | jq -r .DISPLAY.$coin.$currency.CHANGEHOUR) # 1h pricechange in USD
+changePctHour=$(echo "$newValues" | jq -r .DISPLAY.$coin.$currency.CHANGEPCTHOUR) # 1h pricechange in $currency
 
 
 if [[ $changePct == -* ]]; then changePct=${red}$changePct${reset}; else changePct=${green}+$changePct${reset}; fi
@@ -113,7 +124,7 @@ if [[ $change == -* ]]; then change=${red}$change${reset}; else change=${green}$
 
 
 # Calculate FIAT value of Holdings
-holding=$(echo "$jsonFile" | jq ".DATA.Coins.$coin.Holding" | sed s/\"//g;) # get Holdings
+holding=$(echo "$jsonFile" | jq -r ".DATA.Coins.$coin.Holding") # get Holdings
 value=$(awk "BEGIN {h=$holding; p=$rawPrice; vl=h*p; print vl}")
 # Write FIAT value to db.json
 jsonFile=$(echo "$jsonFile" | jq --arg newHolding $value --arg c "$coin" '.DATA.Coins.[$c] += {"FIATholding": $newHolding}');
