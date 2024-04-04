@@ -16,7 +16,7 @@ reset="\e[0m" # ${reset}
 START () {
 jsonFile=$(cat db.json | jq)
     if [[ -z $jsonFile ]]; then
-        jsonFile=$(jq --null-input '{"DATA": {"apiKey": null, "Currency": "USD", "Portfolio": "1", "sortTable": "a", "Coins": {"BTC": {"Holding": null, "FIATholding": null, "Marketcap": null}, "ETH": {"Holding": null, "FIATholding": null, "Marketcap": null}, "BNB": {"Holding": null, "FIATholding": null, "Marketcap": null}, "SOL": {"Holding": null, "FIATholding": null}, "DOGE": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null, "Marketcap": null},}}}');
+        jsonFile=$(jq --null-input '{"DATA": {"apiKey": 0, "Currency": "USD", "Portfolio": "1", "sortTable": "a", "Coins": {"BTC": {"Holding": 0, "FIATholding": 0, "Marketcap": 0}, "ETH": {"Holding": 0, "FIATholding": 0, "Marketcap": 0}, "BNB": {"Holding": 0, "FIATholding": 0, "Marketcap": 0}, "SOL": {"Holding": 0, "FIATholding": 0}, "DOGE": {"Holding": 0, "FIATholding": 0, "Marketcap": 0},}}}');
         echo $jsonFile | jq > db.json
         INSTALL
     fi
@@ -391,7 +391,7 @@ DELETECOIN () {
 }
 
 CHECKSYMBOL () {
-    checkSymbol=$(curl -g -s -X GET "https://min-api.cryptocompare.com/data/price?fsym="$cadd"&tsyms="USD"&api_key={$APIkey}" | jq)
+    checkSymbol=$(curl -g -s -X GET "https://min-api.cryptocompare.com/data/price?fsym="$cadd"&tsyms=USD&api_key={$APIkey}" | jq)
     check=$(echo $checkSymbol | jq -r '.Response');
     if [[ $check == "Error" ]]; then
         echo
@@ -399,7 +399,7 @@ CHECKSYMBOL () {
         echo;echo;
         ADDCOIN
         else
-        jsonFile=$(echo "$jsonFile" | jq --arg Coin "$cadd" '.DATA.Coins += {$Coin: {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null}}')
+        jsonFile=$(echo "$jsonFile" | jq --arg Coin "$cadd" '.DATA.Coins += {$Coin: {"Holding": 0, "FIATholding": 0}}')
         echo "$jsonFile" | jq > db.json
     fi
 }
