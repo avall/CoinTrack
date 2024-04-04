@@ -12,11 +12,12 @@ bold="\e[1m" # ${bold}
 reset="\e[0m" # ${reset}
 
 
-jsonFile=db.json
+
 START () {
-    if [[ ! -f $jsonFile ]]; then
-        jsonFile=$(jq --null-input '{"DATA": {"apiKey": null, "Currency": "USD", "Portfolio": "1", "sortTable": "a", "Coins": {"BTC": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null, "Marketcap": null}, "ETH": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null, "Marketcap": null}, "BNB": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null, "Marketcap": null}, "SOL": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null}, "DOGE": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null, "Marketcap": null},}}}');
-        echo "$jsonFile" > db.json
+jsonFile=$(cat db.json | jq)
+    if [[ -z $jsonFile ]]; then
+        jsonFile=$(jq --null-input '{"DATA": {"apiKey": null, "Currency": "USD", "Portfolio": "1", "sortTable": "a", "Coins": {"BTC": {"Holding": null, "FIATholding": null, "Marketcap": null}, "ETH": {"Holding": null, "FIATholding": null, "Marketcap": null}, "BNB": {"Holding": null, "FIATholding": null, "Marketcap": null}, "SOL": {"Holding": null, "FIATholding": null}, "DOGE": {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null, "Marketcap": null},}}}');
+        echo $jsonFile | jq > db.json
         INSTALL
     fi
 TABLE
@@ -45,8 +46,10 @@ echo "$jsonFile" | jq > db.json
 echo;
 APITEST
 echo;echo;
-echo -e "       You can add your Coins by typing a and enter. Delete Coins with d."
-echo -e "       Add your holdings by typing h and enter. All info about Key you find by typing i."
+echo -e "       Just hit ${white}${bold}[enter]${reset} to fetch the current Prices."
+echo -e "       For Information about all Commands just enter ${white}${bold}[i]${reset}."
+echo;
+echo -n "       [enter] to start."
 read enter
 
 LOGO
@@ -93,8 +96,8 @@ newValues=$(curl -g -s -X GET "https://min-api.cryptocompare.com/data/pricemulti
 
 
 echo;
-echo -e "*******  Coin  ******  Price ********* 1h% ** 24h%  .......  Holdings & Value in $currency";
-echo -e "––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––";
+echo -e "***  Coin  ******  Price ********* 1h% ** 24h%  ***   24h Volume   ***     Marketcap    ***  Holdings & Value in $currency ***";
+echo -e "–––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––----------------–----------";
 for (( i=0; i<$n; i++ ));  do
 
 # Get the Coinsymbols from db.json
@@ -116,7 +119,8 @@ change=$(echo "$newValues" | jq -r .DISPLAY.$coin.$currency.CHANGE24HOUR) # 24h 
 changePct=$(echo "$newValues" | jq -r .DISPLAY.$coin.$currency.CHANGEPCT24HOUR) # 24h pricechange in %
 changeHour=$(echo "$newValues" | jq -r .DISPLAY.$coin.$currency.CHANGEHOUR) # 1h pricechange in USD
 changePctHour=$(echo "$newValues" | jq -r .DISPLAY.$coin.$currency.CHANGEPCTHOUR) # 1h pricechange in $currency
-
+marketCapDsp=$(echo "$newValues" | jq -r .DISPLAY.$coin.$currency.MKTCAP) # Marketcap
+totalVolume=$(echo "$newValues" | jq -r .DISPLAY.$coin.$currency.TOTALVOLUME24HTO) # Total Volume last 24h
 
 if [[ $changePct == -* ]]; then changePct=${red}$changePct${reset}; else changePct=${green}+$changePct${reset}; fi
 if [[ $changePctHour == -* ]]; then changePctHour=${red}$changePctHour${reset}; else changePctHour=${green}+$changePctHour${reset}; fi
@@ -142,7 +146,7 @@ if [[ $value == 0 ]]; then
     holding=" ";
     value=" ";
 fi
-echo -e "....... ${bold}${white}$coin${reset} ... $price ... $changePctHour $changePct  ....... $holding     =     ${blue}$value${reset}"; 
+echo -e "... ${bold}${white}$coin${reset} ... $price ... $changePctHour $changePct  ... $totalVolume ... $marketCapDsp ... $holding     =     ${blue}$value${reset}"; 
 
 done | column -t;
 echo;echo;
@@ -304,7 +308,7 @@ SORT () {
     echo;
     echo -e "   ${white}a${reset} = Alphabetical"
     echo -e "   ${white}m${reset} = Marketcap"
-    echo -e "   ${white}p${reset} = Portfoliovalue"
+    echo -e "   ${white}p${reset} = Portfolio Value"
     echo;
     echo -n "   : "
     read sortOrder
@@ -385,6 +389,21 @@ DELETECOIN () {
         TABLE
     fi
 }
+
+CHECKSYMBOL () {
+    checkSymbol=$(curl -g -s -X GET "https://min-api.cryptocompare.com/data/price?fsym="$cadd"&tsyms="USD"&api_key={$APIkey}" | jq)
+    check=$(echo $checkSymbol | jq -r '.Response');
+    if [[ $check == "Error" ]]; then
+        echo
+        echo -e "   ${red}${bold}$cadd${reset} ${white}is not a valid Coinsymbol. Please check and try again.${reset}"
+        echo;echo;
+        ADDCOIN
+        else
+        jsonFile=$(echo "$jsonFile" | jq --arg Coin "$cadd" '.DATA.Coins += {$Coin: {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null}}')
+        echo "$jsonFile" | jq > db.json
+    fi
+}
+
 ADDCOIN () {
     echo -e "${white}______________________________________________________________________________________________${reset}";
     echo;echo;
@@ -398,8 +417,7 @@ ADDCOIN () {
     if [[ -z $cadd ]]; then
         TABLE
         else
-        jsonFile=$(echo "$jsonFile" | jq --arg Coin "$cadd" '.DATA.Coins += {$Coin: {"Holding": null, "FIATholding": null, "currentPrice": null, "rawCurrentPrice": null}}')
-        echo "$jsonFile" | jq > db.json
+        CHECKSYMBOL
     fi 
 TABLE
 }
