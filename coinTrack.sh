@@ -103,12 +103,12 @@ for (( i=0; i<$n; i++ ));  do
 # Get the Coinsymbols from db.json
 if [[ $sortTABLE == "a" ]]; then
     # Alphabetical Sort
-    coin=$(echo "$jsonFile" | jq ".DATA.Coins | keys.[$i]" | sed 's/\"//g') # Symbol
+    coin=$(echo "$jsonFile" | jq -r ".DATA.Coins | keys.[$i]") # Symbol
     elif [[ $sortTABLE == "p" ]]; then
-    # Sort bei Portfolio Value
+    # Sort by Portfolio Value
     coin=$(echo "$jsonFile" | jq '.DATA.Coins | to_entries | sort_by( .value.FIATholding | tonumber) | reverse | from_entries' | jq -r "keys_unsorted[$i]");
     elif [[ $sortTABLE == "m" ]]; then
-    # Sort bei Portfolio Value
+    # Sort by Portfolio Value
     coin=$(echo "$jsonFile" | jq '.DATA.Coins | to_entries | sort_by( .value.Marketcap | tonumber) | reverse | from_entries' | jq -r "keys_unsorted[$i]");
 fi
 
@@ -135,8 +135,10 @@ jsonFile=$(echo "$jsonFile" | jq --arg newHolding $value --arg c "$coin" '.DATA.
 # Also add current Marketcap
 marketCap=$(echo "$newValues" | jq -r .RAW.$coin.$currency.MKTCAP)
 jsonFile=$(echo "$jsonFile" | jq --arg Mcap $marketCap --arg c "$coin" '.DATA.Coins.[$c] += {"Marketcap": $Mcap}');
+# Write new json Data to db.json only once
+if [[ $i == $(($n-1)) ]]; then
 echo "$jsonFile" | jq > db.json
-
+fi
 
 if [[ $portF == 0 ]]; then
     holding="******";
@@ -151,6 +153,7 @@ echo -e "... ${bold}${white}$coin${reset} ... $price ... $changePctHour $changeP
 done | column -t;
 echo;echo;
 
+
 # Calculate Total Value
 jsonFile=$(cat db.json | jq)
 valueList=$(echo "$jsonFile" | jq '.DATA.Coins.[] | .FIATholding' | sed 's/\"//g')
@@ -164,6 +167,7 @@ if [[ $portF == 0 ]]; then
 fi
 
 echo -e "   Total Value: ${blue}${bold}$currency $totalValue ${reset}";
+
 
 echo;echo;echo;echo;
 MENU
@@ -399,7 +403,7 @@ CHECKSYMBOL () {
         echo;echo;
         ADDCOIN
         else
-        jsonFile=$(echo "$jsonFile" | jq --arg Coin "$cadd" '.DATA.Coins += {$Coin: {"Holding": 0, "FIATholding": 0}}')
+        jsonFile=$(echo "$jsonFile" | jq --arg Coin "$cadd" '.DATA.Coins += {$Coin: {"Holding": "0", "FIATholding": "0", "Marketcap": "0"}}')
         echo "$jsonFile" | jq > db.json
     fi
 }
