@@ -16,7 +16,7 @@ reset="\e[0m" # ${reset}
 START () {
 jsonFile=$(cat db.json | jq)
     if [[ -z $jsonFile ]]; then
-        jsonFile=$(jq --null-input '{"DATA": {"apiKey": 0, "Currency": "USD", "Portfolio": "1", "sortTable": "a", "Coins": {"BTC": {"Holding": 0, "FIATholding": 0, "Marketcap": 0}, "ETH": {"Holding": 0, "FIATholding": 0, "Marketcap": 0}, "BNB": {"Holding": 0, "FIATholding": 0, "Marketcap": 0}, "SOL": {"Holding": 0, "FIATholding": 0}, "DOGE": {"Holding": 0, "FIATholding": 0, "Marketcap": 0},}}}');
+        jsonFile=$(jq --null-input '{"DATA": {"apiKey": 0, "Currency": "USD", "Portfolio": "1", "sortTable": "a", "Lable": "on", "Coins": {"BTC": {"Holding": 0, "FIATholding": 0, "Marketcap": 0}, "ETH": {"Holding": 0, "FIATholding": 0, "Marketcap": 0}, "BNB": {"Holding": 0, "FIATholding": 0, "Marketcap": 0}, "SOL": {"Holding": 0, "FIATholding": 0}, "DOGE": {"Holding": 0, "FIATholding": 0, "Marketcap": 0},}}}');
         echo $jsonFile | jq > db.json
         INSTALL
     fi
@@ -57,14 +57,25 @@ LOGO
 
 
 LOGO () {
+
+# get Options
+jsonFile=$(cat db.json | jq);
+
+
+portF=$(echo "$jsonFile" | jq -r '.DATA.Portfolio');
+currency=$(echo "$jsonFile" | jq -r '.DATA.Currency');
+sortTABLE=$(echo "$jsonFile" | jq -r '.DATA.sortTable');
+lable=$(echo "$jsonFile" | jq -r '.DATA.Lable');
+
 clear
+if [[ -z $lable || $lable == "on" ]]; then
 echo -e "                   _    _______             _     "
 echo -e "                  (_)  |__   __|           | |   "
 echo -e "          ___ ___  _ _ __ | |_ __ __ _  ___| | __"
 echo -e "         / __/ _ \| |  _ \| |  __/ _  |/ __| |/ / "
 echo -e "        | (_| (_) | | | | | | | | (_| | (__|   < "
 echo -e "         \___\___/|_|_| |_|_|_|  \____|\___|_|\_\."
-
+fi
 echo;echo;
 
 }
@@ -74,13 +85,7 @@ echo;echo;
 TABLE () {
 LOGO
 
-# Some Variables
-jsonFile=$(cat db.json | jq);
 
-
-portF=$(echo "$jsonFile" | jq -r '.DATA.Portfolio');
-currency=$(echo "$jsonFile" | jq -r '.DATA.Currency');
-sortTABLE=$(echo "$jsonFile" | jq -r '.DATA.sortTable');
 
 
 #Count amount of CoinstoTrack
@@ -279,6 +284,7 @@ case $next in
     "H") HOLDINGS ;;
     "c") CURRENCY ;;
     "s") SORT ;;
+    "L") LABLE ;;
     *) TABLE ;;
 esac
 
@@ -297,13 +303,24 @@ INFO () {
     echo -e "   ${bold}p${reset} - Portfolio Visible/Hidden"
     echo -e "   ${bold}c${reset} - Change Currency USD/EUR"
     echo -e "   ${bold}s${reset} - Sort the listing"
+    echo -e "   ${bold}L${reset} - Show/Hide coinTrack Logo"
     echo
     echo -e "   ${bold}q${reset} - Quit"
     echo;echo;echo;
     MENU
 }
 
-
+LABLE () {
+    if [[ $lable == "on" ]]; then
+        lable="off"
+        jsonFile=$(echo "$jsonFile" | jq --arg lab "$lable" '.DATA += {"Lable": $lab}')
+    else
+        lable="on"
+        jsonFile=$(echo "$jsonFile" | jq --arg lab "$lable" '.DATA += {"Lable": $lab}')
+    fi
+    echo $jsonFile | jq > db.json
+    TABLE
+}
 SORT () {
     echo -e "${white}______________________________________________________________________________________________${reset}";
     echo;echo;
@@ -334,12 +351,11 @@ SHOWPORT () {
     if [[ $portF == "1" ]]; then
         portF="0";
         jsonFile=$(echo "$jsonFile" | jq --arg port "$portF" '.DATA += {"Portfolio": $port}')
-        echo $jsonFile | jq > db.json
         else
         portF="1";
         jsonFile=$(echo "$jsonFile" | jq --arg port "$portF" '.DATA += {"Portfolio": $port}')
-        echo $jsonFile | jq > db.json
     fi
+    echo $jsonFile | jq > db.json
     TABLE
 }
 
