@@ -2,22 +2,22 @@
 printf '\033[8;40;140t'
 
 # Farben Palette
-red="\e[0;31m" # ${red}
-green="\e[0;32m" # ${green}
-white="\e[1;37m" # ${white}
-blue="\e[0;94m" # ${blue}
-grey="\e[0;31m" # ${grey}
-violet="\e[0;36" # ${violet}
-bold="\e[1m" # ${bold}
-reset="\e[0m" # ${reset}
+red="\033[31m" # ${red}
+green="\033[32m" # ${green}
+white="\033[37m" # ${white}
+blue="\033[34m" # ${blue}
+grey="\033[35m" # ${grey}
+violet="\033[35m" # ${violet}
+bold="\033[1m" # ${bold}
+reset="\033[0m" # ${reset}
 
 
 
 START () {
-jsonFile=$(cat db.json | jq)
+jsonFile=$(cat ~/.cointrack/db.json | jq)
     if [[ -z $jsonFile ]]; then
         jsonFile=$(jq --null-input '{"DATA": {"apiKey": 0, "Currency": "USD", "Portfolio": "1", "sortTable": "a", "Lable": "on", "Coins": {"BTC": {"Holding": 0, "FIATholding": 0, "Marketcap": 0}, "ETH": {"Holding": 0, "FIATholding": 0, "Marketcap": 0}, "BNB": {"Holding": 0, "FIATholding": 0, "Marketcap": 0}, "SOL": {"Holding": 0, "FIATholding": 0}, "DOGE": {"Holding": 0, "FIATholding": 0, "Marketcap": 0},}}}');
-        echo $jsonFile | jq > db.json
+        echo $jsonFile | jq > ~/.cointrack/db.json
         INSTALL
     fi
 TABLE
@@ -40,9 +40,9 @@ echo -e "       Please enter your API Key from Cryptocompare:"
 echo -n "       : "
 read APIkey
 
-jsonFile=$(cat db.json | jq)
+jsonFile=$(cat ~/.cointrack/db.json | jq)
 jsonFile=$(echo "$jsonFile" | jq --arg apiKey "$APIkey" '.DATA += {"apiKey": $apiKey}')
-echo "$jsonFile" | jq > db.json
+echo "$jsonFile" | jq > ~/.cointrack/db.json
 echo;
 APITEST
 echo;echo;
@@ -59,7 +59,7 @@ LOGO
 LOGO () {
 
 # get Options
-jsonFile=$(cat db.json | jq);
+jsonFile=$(cat ~/.cointrack/db.json | jq);
 
 
 portF=$(echo "$jsonFile" | jq -r '.DATA.Portfolio');
@@ -142,7 +142,7 @@ marketCap=$(echo "$newValues" | jq -r .RAW.$coin.$currency.MKTCAP)
 jsonFile=$(echo "$jsonFile" | jq --arg Mcap $marketCap --arg c "$coin" '.DATA.Coins.[$c] += {"Marketcap": $Mcap}');
 # Write new json Data to db.json only once
 if [[ $i == $(($n-1)) ]]; then
-echo "$jsonFile" | jq > db.json
+echo "$jsonFile" | jq > ~/.cointrack/db.json
 fi
 
 if [[ $portF == 0 ]]; then
@@ -160,7 +160,7 @@ echo;echo;
 
 
 # Calculate Total Value
-jsonFile=$(cat db.json | jq)
+jsonFile=$(cat ~/.cointrack/db.json | jq)
 valueList=$(echo "$jsonFile" | jq '.DATA.Coins.[] | .FIATholding' | sed 's/\"//g')
     
 while IFS= read -r line; do
@@ -318,7 +318,7 @@ LABLE () {
         lable="on"
         jsonFile=$(echo "$jsonFile" | jq --arg lab "$lable" '.DATA += {"Lable": $lab}')
     fi
-    echo $jsonFile | jq > db.json
+    echo $jsonFile | jq > ~/.cointrack/db.json
     TABLE
 }
 SORT () {
@@ -337,7 +337,7 @@ SORT () {
         TABLE
         elif [[ $sortOrder == *"a"* || $sortOrder == *"m"* || $sortOrder == *"p"* ]]; then
         jsonFile=$(echo "$jsonFile" | jq --arg sort "$sortOrder" '.DATA += {"sortTable": $sort}')
-        echo $jsonFile | jq > db.json
+        echo $jsonFile | jq > ~/.cointrack/db.json
         TABLE
         else
         echo
@@ -355,7 +355,7 @@ SHOWPORT () {
         portF="1";
         jsonFile=$(echo "$jsonFile" | jq --arg port "$portF" '.DATA += {"Portfolio": $port}')
     fi
-    echo $jsonFile | jq > db.json
+    echo $jsonFile | jq > ~/.cointrack/db.json
     TABLE
 }
 
@@ -363,11 +363,11 @@ CURRENCY () {
     if [[ $currency == "USD" ]]; then
         currency="EUR"
         jsonFile=$(echo "$jsonFile" | jq --arg Cur "$currency" '.DATA += {"Currency": $Cur}')
-        echo $jsonFile | jq > db.json
+        echo $jsonFile | jq > ~/.cointrack/db.json
         else
         currency="USD"
         jsonFile=$(echo "$jsonFile" | jq --arg Cur "$currency" '.DATA += {"Currency": $Cur}')
-        echo $jsonFile | jq > db.json
+        echo $jsonFile | jq > ~/.cointrack/db.json
     fi
     TABLE
 }
@@ -399,7 +399,7 @@ DELETECOIN () {
     read sure
     if [[ $sure == y || -z $sure ]]; then
         jsonFile=$(echo "$jsonFile" | jq --arg delCoin "$dcoin" 'del(.DATA.Coins.[$delCoin])')
-        echo "$jsonFile" | jq > db.json
+        echo "$jsonFile" | jq > ~/.cointrack/db.json
 
         TABLE
     else
@@ -420,7 +420,7 @@ CHECKSYMBOL () {
         ADDCOIN
         else
         jsonFile=$(echo "$jsonFile" | jq --arg Coin "$cadd" '.DATA.Coins += {$Coin: {"Holding": "0", "FIATholding": "0", "Marketcap": "0"}}')
-        echo "$jsonFile" | jq > db.json
+        echo "$jsonFile" | jq > ~/.cointrack/db.json
     fi
 }
 
@@ -480,7 +480,7 @@ HOLDINGS () {
     fi
 
     jsonFile=$(echo "$jsonFile" | jq --arg newHolding $newAmount --arg c "$selectedCoin" '.DATA.Coins.[$c] += {"Holding": $newHolding}')
-    echo "$jsonFile" | jq > db.json
+    echo "$jsonFile" | jq > ~/.cointrack/db.json
    
 
 
